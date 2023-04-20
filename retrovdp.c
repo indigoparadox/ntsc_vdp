@@ -32,15 +32,6 @@ MERROR_RETVAL retroflat_vdp_init( struct RETROFLAT_STATE* state ) {
 
    state->vdp_flags = RETROFLAT_VDP_FLAG_PXLOCK;
 
-   /* Create intermediary screen buffer. */
-   debug_printf( 1, "creating VDP buffer, %d x %d",
-      state->screen_v_w, state->screen_v_h );
-   state->vdp_buffer = calloc( 1, sizeof( struct RETROFLAT_BITMAP ) );
-   maug_cleanup_if_null_alloc( struct RETROFLAT_BITMAP*, state->vdp_buffer );
-   retval = state->vdp_create_bitmap(
-      state->screen_v_w, state->screen_v_h, state->vdp_buffer,
-      RETROFLAT_FLAGS_OPAQUE );
-
    /* Initialize CRT buffer. */
    crt_init(
       &(data->crt), state->screen_v_w, state->screen_v_h,
@@ -72,8 +63,6 @@ extern __declspec( dllexport )
 #endif /* RETROFLAT_OS_WIN */
 void retroflat_vdp_shutdown( struct RETROFLAT_STATE* state ) {
    printf( "shutting down NTSC...\n" );
-   state->vdp_destroy_bitmap( state->vdp_buffer );
-   free( state->vdp_buffer );
    free( state->vdp_data );
 }
 

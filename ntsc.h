@@ -2,7 +2,6 @@
 #ifndef NTSC_H
 #define NTSC_H
 
-#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

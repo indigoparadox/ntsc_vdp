@@ -3,8 +3,10 @@
 #include <maug.h>
 #include <retroflt.h>
 
-#if !defined( RETROFLAT_API_SDL1 ) && !defined( RETROFLAT_API_WIN32 )
-#   error "NTSC presently only works with SDL1 or WIN32!"
+#if !defined( RETROFLAT_API_SDL1 ) && \
+   !defined( RETROFLAT_API_WIN32 ) && \
+   !defined( RETROFLAT_API_SDL2 )
+#   error "NTSC presently only works with SDL or WIN32!"
 #endif /* !RETROFLAT_API_SDL1 && !RETROFLAT_API_WIN32 */
 
 #define NTSC_C
@@ -24,7 +26,7 @@ MERROR_RETVAL retroflat_vdp_init( struct RETROFLAT_STATE* state ) {
    MERROR_RETVAL retval = MERROR_OK;
    struct VDP_DATA* data = NULL;
 
-   printf( "setting up NTSC...\n" );
+   debug_printf( 3, "setting up NTSC..." );
 
    state->vdp_data = calloc( 1, sizeof( struct VDP_DATA ) );
    maug_cleanup_if_null_alloc( void*, state->vdp_data );
@@ -35,11 +37,13 @@ MERROR_RETVAL retroflat_vdp_init( struct RETROFLAT_STATE* state ) {
    /* Initialize CRT buffer. */
    crt_init(
       &(data->crt), state->screen_v_w, state->screen_v_h,
-#ifdef RETROFLAT_API_SDL1
+#if defined( RETROFLAT_API_SDL1 )
       CRT_PIX_FORMAT_RGBA, state->buffer.surface->pixels );
+#elif defined( RETROFLAT_API_SDL2 )
+      CRT_PIX_FORMAT_RGBA, NULL );
 #else
       /* TODO */
-      CRT_PIX_FORMAT_BGRA, NULL );
+      CRT_PIX_FORMAT_BGRA, state->buffer.bits );
 #endif /* RETROFLAT_API_SDL1 */
    data->crt.blend = 1;
    data->crt.scanlines = 1;
@@ -49,7 +53,7 @@ MERROR_RETVAL retroflat_vdp_init( struct RETROFLAT_STATE* state ) {
    data->ntsc.as_color = 1;
    data->ntsc.raw = 0;
    if( 0 < strlen( state->vdp_args ) ) {
-      printf( "NTSC noise: %d\n", atoi( state->vdp_args ) );
+      debug_printf( 1, "NTSC noise: %d\n", atoi( state->vdp_args ) );
       data->noise = atoi( state->vdp_args );
    }
 
@@ -61,9 +65,11 @@ cleanup:
 #ifdef RETROFLAT_OS_WIN
 extern __declspec( dllexport )
 #endif /* RETROFLAT_OS_WIN */
-void retroflat_vdp_shutdown( struct RETROFLAT_STATE* state ) {
-   printf( "shutting down NTSC...\n" );
+MERROR_RETVAL retroflat_vdp_shutdown( struct RETROFLAT_STATE* state ) {
+   MERROR_RETVAL retval = MERROR_OK;
+   debug_printf( 3, "shutting down NTSC..." );
    free( state->vdp_data );
+   return retval;
 }
 
 #ifdef RETROFLAT_OS_WIN
@@ -73,7 +79,7 @@ MERROR_RETVAL retroflat_vdp_flip( struct RETROFLAT_STATE* state ) {
    MERROR_RETVAL retval = MERROR_OK;
    struct VDP_DATA* data = (struct VDP_DATA*)(state->vdp_data);
 
-#ifdef RETROFLAT_API_SDL1
+#if defined( RETROFLAT_API_SDL1 ) || defined( RETROFLAT_API_SDL2 )
    assert( 4 == state->buffer.surface->format->BytesPerPixel );
 #endif /* RETROFLAT_API_SDL1 */
    assert( 0 < state->screen_v_w );
@@ -81,7 +87,7 @@ MERROR_RETVAL retroflat_vdp_flip( struct RETROFLAT_STATE* state ) {
    assert( NULL != data );
    assert( NULL != state->vdp_buffer );
 
-#ifdef RETROFLAT_API_SDL1
+#if defined( RETROFLAT_API_SDL1 ) || defined( RETROFLAT_API_SDL2 )
    data->ntsc.data = state->vdp_buffer->surface->pixels;
    data->crt.out = state->buffer.surface->pixels;
    data->ntsc.format = CRT_PIX_FORMAT_RGBA;

@@ -1,3 +1,6 @@
 *.dll
 *.so
+*.err
+*.map
+*.def
 *.o

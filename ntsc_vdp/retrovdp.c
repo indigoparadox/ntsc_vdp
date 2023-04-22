@@ -28,6 +28,10 @@ MERROR_RETVAL retroflat_vdp_init( struct RETROFLAT_STATE* state ) {
 
    debug_printf( 3, "setting up NTSC..." );
 
+   /* Make sure we used the same header to define bitmap struct! */
+   assert( NULL != state->vdp_buffer );
+   assert( sizeof( struct RETROFLAT_BITMAP ) == state->vdp_buffer->sz );
+
    state->vdp_data = calloc( 1, sizeof( struct VDP_DATA ) );
    maug_cleanup_if_null_alloc( void*, state->vdp_data );
    data = (struct VDP_DATA*)(state->vdp_data);
